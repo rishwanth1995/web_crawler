@@ -5,7 +5,6 @@ from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin, urlparse
 import sys
 import validators
-import threading
  
  
 class WebCrawler:
@@ -19,7 +18,8 @@ class WebCrawler:
         self.unvisited_url = Queue()
         self.unvisited_url.put(self.base_url)
  
-    def parse_links(self, html):
+    def parse_html(self, html):
+        # background  thread
         if html is None:
             return
         soup = BeautifulSoup(html, 'html.parser')
@@ -35,12 +35,14 @@ class WebCrawler:
                     self.unvisited_url.put(url)
  
  
-    def post_scrape_callback(self, res):
+    def post_fetch(self, res):
+        #  background thread
         result = res.result()
         if result and result.status_code == 200:
-            self.parse_links(result.text)
+            self.parse_html(result.text)
  
-    def scrape_page(self, url):
+    def fetch(self, url):
+        #  background thread
         try:
             res = requests.get(url, timeout=(3, 30))
             return res
@@ -49,13 +51,14 @@ class WebCrawler:
  
     def run_crawler(self):
         while True:
+            # main thread
             try:
                 target_url = self.unvisited_url.get(timeout=10)
                 if target_url not in self.visited_url:
                     print(target_url)
                     self.visited_url.add(target_url)
-                    job = self.threadPool.submit(self.scrape_page, target_url)
-                    job.add_done_callback(self.post_scrape_callback)
+                    job = self.threadPool.submit(self.fetch, target_url)
+                    job.add_done_callback(self.post_fetch)
             except Empty:
                 return
             except Exception as e:
