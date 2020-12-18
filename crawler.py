@@ -66,9 +66,10 @@ class WebCrawler:
                 continue
 
 def main(arguments):
-    if len(arguments) != 1:
+    if len(arguments) != 2:
         print("Expecting 1 argument, enter website url to crawl")
-    url = arguments[0]
+        return
+    url = arguments[1]
     valid=validators.url(url)
     if valid != True:
         print("Invalid url")
@@ -77,4 +78,4 @@ def main(arguments):
     webCrawler.run_crawler()
     
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main(sys.argv)
